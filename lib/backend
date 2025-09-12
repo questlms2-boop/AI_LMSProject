@@ -1,0 +1,43 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+Future<void> registerUser({
+  required String firstName,
+  required String lastName,
+  required String mobile,
+  required String password,
+  required String education,
+  required String userId,
+  required String username,
+  required String role,
+}) async {
+  final url = Uri.parse('http://localhost:8081/api/register'); // If using mobile device, replace with your computer's IP
+
+  final Map<String, dynamic> body = {
+    "firstName": firstName,
+    "lastName": lastName,
+    "mobile": mobile,
+    "password": password,
+    "education": education,
+    "userId": userId,
+    "username": username,
+    "role": role,
+  };
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      debugPrint("✅ Registered: ${response.body}");
+    } else {
+      debugPrint("❌ Error: ${response.statusCode} - ${response.body}");
+    }
+  } catch (e) {
+    debugPrint("❗ Exception: $e");
+  }
+}
