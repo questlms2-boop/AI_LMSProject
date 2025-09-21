@@ -13,35 +13,39 @@ class InstructorDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-  title: const Text('Instructor Dashboard'),
-  backgroundColor: Colors.deepPurple,
-  actions: [
-    PopupMenuButton<String>(
-      onSelected: (value) {
-        if (value == 'profile') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const InstructorProfilePage()),
-          );
-        } else if (value == 'logout') {
-          // Navigate to Login Page or Welcome Screen
-          Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'profile',
-          child: Text('Account Details'),
+      title: const Text('Instructor Dashboard'),
+      leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
-        const PopupMenuItem<String>(
-          value: 'logout',
-          child: Text('Logout'),
-        ),
-      ],
-      icon: const Icon(Icons.account_circle),
-    ),
-  ],
-),
+        backgroundColor: Colors.deepPurple,
+        // actions: [
+        //   PopupMenuButton<String>(
+        //     onSelected: (value) {
+        //       if (value == 'profile') {
+        //         Navigator.push(
+        //           context,
+        //           MaterialPageRoute(builder: (_) => const InstructorProfilePage()),
+        //         );
+        //       } else if (value == 'logout') {
+        //         // Navigate to Login Page or Welcome Screen
+        //         Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        //       }
+        //     },
+        //     itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        //       const PopupMenuItem<String>(
+        //         value: 'profile',
+        //         child: Text('Account Details'),
+        //       ),
+        //       const PopupMenuItem<String>(
+        //         value: 'logout',
+        //         child: Text('Logout'),
+        //       ),
+        //     ],
+        //     icon: const Icon(Icons.account_circle),
+        //   ),
+        // ],
+      ),
 
       body: GridView.count(
         padding: const EdgeInsets.all(20),

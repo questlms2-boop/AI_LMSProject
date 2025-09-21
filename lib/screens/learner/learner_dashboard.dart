@@ -1,489 +1,173 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:ai_lms_project/screens/auth/login_screen.dart';
-import 'learner_settings_page.dart';
+import 'package:http/http.dart' as http;
+import 'package:ai_lms_project/screens/quiz/quiz_screen.dart';
 
-class LearnerDashboard extends StatelessWidget {
-  const LearnerDashboard({super.key});
+class UserCourseProgress {
+  final String courseId;
+  final String courseName;
+  final int totalQuizzes;
+  final int attemptedCount;
+  final int correctCount;
+  final bool completed;
 
-  void _navigateToCourseDetail(BuildContext context, String title) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => CourseDetailPage(title: title)),
-    );
-  }
+  UserCourseProgress({
+    required this.courseId,
+    required this.courseName,
+    required this.totalQuizzes,
+    required this.attemptedCount,
+    required this.correctCount,
+    required this.completed,
+  });
+
+  factory UserCourseProgress.fromJson(Map<String, dynamic> json) => UserCourseProgress(
+    courseId: json['courseId'],
+    courseName: json['courseName'],
+    totalQuizzes: json['totalQuizzes'],
+    attemptedCount: json['attemptedCount'],
+    correctCount: json['correctCount'],
+    completed: json['completed'],
+  );
+}
+
+
+class LearnerDashboard extends StatefulWidget {
+  final String userId;
+  const LearnerDashboard({required this.userId, super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final screenWidth = screenSize.width;
-    final screenHeight = screenSize.height;
-    final imageSize = screenWidth * 0.18;
-    final badgeSize = screenWidth * 0.22;
+  State<LearnerDashboard> createState() => _LearnerDashboardState();
+}
 
-    return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.deepPurple),
-              child: Text(
-                'Menu',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Account Settings'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const LearnerAccountSettingsPage(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                  (Route<dynamic> route) => false,
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-      appBar: AppBar(
-        title: const Text('Learner Dashboard'),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: screenHeight),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search courses...',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+class _LearnerDashboardState extends State<LearnerDashboard> {
+  late Future<List<Course>> _coursesFuture;
+  late Future<List<UserCourseProgress>> _progressFuture;
+  late Future<List<LeaderboardEntry>> _leaderboardFuture;
 
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    height: 150,
-                    decoration: const BoxDecoration(
-                      color: Colors.deepPurple,
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(80),
-                      ),
-                    ),
-                  ),
-                  Column(
-                    children: [
-                      const Text(
-                        'Your Score',
-                        style: TextStyle(color: Colors.white70, fontSize: 18),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          SizedBox(width: 6),
-                          Text(
-                            '1250 XP',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Icon(Icons.star, color: Colors.amber, size: 32),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+  int _topScore = 0;
 
-              const SizedBox(height: 30),
-              const Text(
-                'Earned Badges',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: badgeSize + 80,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _badge('Achiever', badgeSize),
-                    _badge('Fast Learner', badgeSize),
-                    _badge('Top Scorer', badgeSize),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'Course List',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              _courseTile(
-                'Flutter Basics',
-                'Beginner',
-                'assets/flutter.jpeg',
-                imageSize,
-              ),
-              _courseTile(
-                'Java Programming',
-                'Intermediate',
-                'assets/java.png',
-                imageSize,
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'Leaderboard',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.deepPurple, Colors.deepPurpleAccent],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _leaderTile('1. Alice', '1520 XP'),
-                    _leaderTile('2. Bob', '1480 XP'),
-                    _leaderTile('3. Charlie', '1400 XP'),
-                    _leaderTile('4. Diana', '1300 XP'),
-                    _leaderTile('5. Evan', '1280 XP'),
-                    const Divider(color: Colors.white54),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Text(
-                          'Your Rank: 12th',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          '1250 XP',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Icon(Icons.star, color: Colors.amber, size: 16),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'Learning Courses',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () =>
-                    _navigateToCourseDetail(context, 'Flutter Advanced'),
-                child: _learningCourse(
-                  'Flutter Advanced',
-                  '70% Completed',
-                  'assets/flutter.jpeg',
-                  0.7,
-                  imageSize,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _navigateToCourseDetail(context, 'Spring Boot'),
-                child: _learningCourse(
-                  'Spring Boot',
-                  '45% Completed',
-                  'assets/java.png',
-                  0.45,
-                  imageSize,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Text(
-                'Completed Courses',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => _navigateToCourseDetail(context, 'HTML & CSS'),
-                child: _completedCourse(
-                  'HTML & CSS',
-                  '100% Completed',
-                  'assets/html.jpeg',
-                  imageSize,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _navigateToCourseDetail(context, 'Dart Basics'),
-                child: _completedCourse(
-                  'Dart Basics',
-                  '100% Completed',
-                  'assets/dart.png',
-                  imageSize,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              Text(
-                'Mobile Size: ${screenWidth.toInt()} x ${screenHeight.toInt()}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _coursesFuture = fetchCourses();
+    _progressFuture = fetchUserProgress(widget.userId);
+    _leaderboardFuture = fetchLeaderboard();
   }
 
-  Widget _badge(String label, double size) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.all(16),
-      width: size,
-      decoration: BoxDecoration(
-        color: Colors.deepPurple.shade100,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.deepPurple, width: 2),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.emoji_events, color: Colors.deepPurple, size: 40),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
+  Future<List<Course>> fetchCourses() async {
+    final resp = await http.get(Uri.parse('http://10.0.2.2:8081/api/course-content'));
+    final body = jsonDecode(resp.body);
+    List data = body['data'];
+    return data.map((c) => Course.fromJson(c)).toList();
   }
 
-  Widget _courseTile(
-    String title,
-    String level,
-    String imagePath,
-    double imageSize,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Image.asset(imagePath, width: imageSize, height: imageSize),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(level, style: const TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 16),
-          ],
-        ),
-      ),
-    );
+  Future<List<UserCourseProgress>> fetchUserProgress(String userId) async {
+    final resp = await http.get(Uri.parse('http://10.0.2.2:8081/api/user-progress/$userId'));
+    final body = jsonDecode(resp.body);
+    print("user-progress response: ${resp.body}");
+    List data = body['data'];
+    // Also update top score locally (simulate here)
+    // Sum total XP from all courses
+    int totalXp = 0;
+    for (var course in data) {
+      var xpValue = course['xp'];
+      if (xpValue is num && xpValue > totalXp) {
+        totalXp = xpValue.toInt();
+      }
+    }
+    setState(() {
+      _topScore = totalXp;
+    });
+
+    
+    return data.map((json) => UserCourseProgress.fromJson(json)).toList();
   }
 
-  Widget _leaderTile(String name, String score) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(name, style: const TextStyle(color: Colors.white, fontSize: 16)),
-          Row(
-            children: [
-              const SizedBox(width: 4),
-              Text(
-                score,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Icon(Icons.star, color: Colors.amberAccent, size: 18),
-            ],
-          ),
-        ],
-      ),
-    );
+  Future<List<LeaderboardEntry>> fetchLeaderboard() async {
+    final resp = await http.get(Uri.parse('http://10.0.2.2:8081/api/leaderboard'));
+    final body = jsonDecode(resp.body);
+    List data = body['data'];
+    return data.map((json) => LeaderboardEntry.fromJson(json)).toList();
   }
 
-  Widget _completedCourse(
-    String title,
-    String progress,
-    String imagePath,
-    double imageSize,
-  ) {
-    return Card(
-      color: Colors.green.shade50,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Image.asset(imagePath, width: imageSize, height: imageSize),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(progress, style: const TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _learningCourse(
-    String title,
-    String progress,
-    String imagePath,
-    double percent,
-    double imageSize,
-  ) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Image.asset(imagePath, width: imageSize, height: imageSize),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        progress,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            LinearProgressIndicator(
-              value: percent,
-              backgroundColor: Colors.grey.shade300,
-              color: Colors.green,
-              minHeight: 4,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        ),
-      ),
-    );
+ void _navigateToQuiz(BuildContext context, Course course) async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => QuizPage(course: course, userId: widget.userId),
+    ),
+  );
+  if (result == true) {
+    // Refresh progress and leaderboard after quiz submission
+    setState(() {
+      _progressFuture = fetchUserProgress(widget.userId);
+      _leaderboardFuture = fetchLeaderboard();
+    });
   }
 }
 
-class CourseDetailPage extends StatelessWidget {
-  final String title;
-
-  const CourseDetailPage({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title), backgroundColor: Colors.deepPurple),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+  return Scaffold(
+  appBar: AppBar(
+    title: const Text('Learner Dashboard'),
+    leading: IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => Navigator.pop(context),
+    ),
+  ),
+  body: RefreshIndicator(
+    onRefresh: () async {
+      setState(() {
+        _coursesFuture = fetchCourses();
+        _progressFuture = fetchUserProgress(widget.userId);
+        _leaderboardFuture = fetchLeaderboard();
+      });
+    },
+    child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildTopScoreCard(),
+            const SizedBox(height: 16),
+            _buildSectionTitle('Leaderboard'),
+            _buildLeaderboardSection(),
+            const SizedBox(height: 16),
+            _buildSectionTitle('Courses'),
+            _buildCoursesSection(),
+            const SizedBox(height: 16),
+            _buildSectionTitle('Your Progress'),
+            _buildProgressSection(),
+          ],
+        ),
+      ),
+    ),
+  ),
+);
+
+  }
+
+  Widget _buildTopScoreCard() {
+    return Card(
+      color: Colors.deepPurple,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.star, color: Colors.amber, size: 36),
+            const SizedBox(width: 12),
             Text(
-              'Course Description',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'This is a placeholder description for the course. It explains what the learner will gain.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 24),
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 14,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          CourseContentPage(courseTitle: title),
-                    ),
-                  );
-                },
-                child: const Text('Enroll'),
+              'Your Score: $_topScore XP',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -491,26 +175,159 @@ class CourseDetailPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.deepPurple),
+    );
+  }
+
+  Widget _buildLeaderboardSection() {
+    return FutureBuilder<List<LeaderboardEntry>>(
+      future: _leaderboardFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final leaders = snapshot.data!;
+        return Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListView.separated(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: leaders.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final leader = leaders[index];
+              return ListTile(
+                leading: CircleAvatar(child: Text('${index + 1}')),
+                title: Text(leader.name),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${leader.xp} XP', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.star, color: Colors.amber),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCoursesSection() {
+    return FutureBuilder<List<Course>>(
+      future: _coursesFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final courses = snapshot.data!;
+        return Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListView.separated(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: courses.length,
+            separatorBuilder: (_, __) => const Divider(),
+            itemBuilder: (context, index) {
+              final course = courses[index];
+              return ListTile(
+                title: Text(course.courseName),
+                trailing: ElevatedButton(
+                  onPressed: () => _navigateToQuiz(context, course),
+                  child: const Text('Start Quiz'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProgressSection() {
+    return FutureBuilder<List<UserCourseProgress>>(
+      future: _progressFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+        final progresses = snapshot.data!;
+        final completed = progresses.where((p) => p.completed).toList();
+        final ongoing = progresses.where((p) => !p.completed).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Completed Courses (${completed.length})', style: const TextStyle(fontWeight: FontWeight.bold)),
+            completed.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('No completed courses yet.'),
+                  )
+                : _buildCourseStatusList(completed),
+            const SizedBox(height: 12),
+            Text('Ongoing Courses (${ongoing.length})', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ongoing.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text('No ongoing courses currently.'),
+                  )
+                : _buildCourseStatusList(ongoing),
+          ],
+        );
+      },
+    );
+  }
+
+Widget _buildCourseStatusList(List<UserCourseProgress> courses) {
+  if (courses.isEmpty) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Text("No courses in this section.", style: TextStyle(color: Colors.grey[600])),
+    );
+  }
+  return Card(
+    elevation: 2,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemCount: courses.length,
+      separatorBuilder: (_, __) => const Divider(),
+      itemBuilder: (context, index) {
+        final progress = courses[index];
+        final completionPercent = progress.totalQuizzes == 0
+            ? 0.0
+            : (progress.attemptedCount / progress.totalQuizzes).clamp(0.0, 1.0);
+        return ListTile(
+          title: Text(progress.courseName),
+          subtitle: LinearProgressIndicator(
+            value: completionPercent,
+            minHeight: 6,
+            backgroundColor: Colors.grey.shade300,
+            color: Colors.deepPurple,
+          ),
+          trailing: Text('${(completionPercent * 100).toStringAsFixed(0)}%'),
+        );
+      },
+    ),
+  );
 }
 
-class CourseContentPage extends StatelessWidget {
-  final String courseTitle;
+}
 
-  const CourseContentPage({super.key, required this.courseTitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$courseTitle Content'),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Center(
-        child: Text(
-          'Content for $courseTitle goes here.',
-          style: const TextStyle(fontSize: 18),
-        ),
-      ),
+class LeaderboardEntry {
+  final String name;
+  final int xp;
+  LeaderboardEntry({required this.name, required this.xp});
+  factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
+    return LeaderboardEntry(
+      name: json['name'] ?? 'Unknown',
+      xp: json['xp'] ?? 0,
     );
   }
 }

@@ -1,9 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:ai_lms_project/widgets/custom_textfield.dart';
 import 'package:ai_lms_project/screens/auth/login_screen.dart';
 import 'package:ai_lms_project/screens/instructor/instructor_dashboard.dart';
@@ -43,90 +40,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
+Future<void> registerUser() async {
+  if (idCtrl.text.isEmpty ||
+      nameCtrl.text.isEmpty ||
+      emailCtrl.text.isEmpty ||
+      passwordCtrl.text.isEmpty ||
+      confirmPasswordCtrl.text.isEmpty) {
+    showSnack("Please fill in all required fields");
+    return;
+  }
 
-  Future<void> registerUser() async {
-    if (idCtrl.text.isEmpty ||
-        nameCtrl.text.isEmpty ||
-        emailCtrl.text.isEmpty ||
-        passwordCtrl.text.isEmpty ||
-        confirmPasswordCtrl.text.isEmpty) {
-      showSnack("Please fill in all required fields");
+  bool isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  if (!isValidEmail(emailCtrl.text.trim())) {
+    showSnack("Please enter a valid email address");
+    return;
+  }
+
+  if (passwordCtrl.text != confirmPasswordCtrl.text) {
+    showSnack("Passwords do not match");
+    return;
+  }
+
+  if (selectedRole == Role.Student) {
+    if (selectedDepartment == null || selectedClass == null) {
+      showSnack("Please select department and class");
       return;
     }
-    bool isValidEmail(String email) {
-      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-      return emailRegex.hasMatch(email);
-    }
-
-    if (!isValidEmail(emailCtrl.text.trim())) {
-      showSnack("Please enter a valid email address");
+  } else if (selectedRole == Role.Instructor) {
+    if (selectedInstructorDepartment == null) {
+      showSnack("Please select department");
       return;
     }
+  }
 
-    if (passwordCtrl.text != confirmPasswordCtrl.text) {
-      showSnack("Passwords do not match");
-      return;
-    }
-
-    if (selectedRole == Role.Student) {
-      if (selectedDepartment == null || selectedClass == null) {
-        showSnack("Please select department and class");
-        return;
-      }
-    } else if (selectedRole == Role.Instructor) {
-      if (selectedInstructorDepartment == null) {
-        showSnack("Please select department");
-        return;
-      }
-    }
-
-    try {
-      final email = emailCtrl.text.trim(); // Fake email for Firebase
-      final password = passwordCtrl.text;
-      final role = selectedRole.name;
-
-      // Firebase Auth registration
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      final uid = userCredential.user!.uid;
-
-      // Firestore save
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'uid': uid,
+  try {
+    final url = Uri.parse('http://10.0.2.2:8081/api/register');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
         'id': idCtrl.text,
         'name': nameCtrl.text,
-        'email': email,
-        'role': role,
+        'email': emailCtrl.text.trim(),
+        'role': selectedRole.name,
         'department': selectedRole == Role.Student
             ? selectedDepartment
             : selectedInstructorDepartment,
         'class': selectedRole == Role.Student ? selectedClass : null,
-      });
+        'password': passwordCtrl.text,
+      }),
+    );
 
-      // Spring Boot API call
-      final url = Uri.parse('http://localhost:8081/api/register');
-      await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'id': idCtrl.text,
-          'name': nameCtrl.text,
-          'email': email,
-          'role': role,
-          'department': selectedRole == Role.Student
-              ? selectedDepartment
-              : selectedInstructorDepartment,
-          'class': selectedRole == Role.Student ? selectedClass : null,
-          'password': password,
-        }),
-      );
+    final result = jsonDecode(response.body);
 
+    if (response.statusCode == 200 && result['success'] == true) {
       // Navigate based on role
       if (selectedRole == Role.Student) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const LearnerDashboard()),
+         MaterialPageRoute(builder: (_) => LearnerDashboard(userId: result['userId'])),
+
         );
       } else {
         Navigator.pushReplacement(
@@ -134,10 +111,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           MaterialPageRoute(builder: (_) => const InstructorDashboard()),
         );
       }
-    } catch (e) {
-      showSnack("Registration failed: $e");
+    } else {
+      showSnack(result['message'] ?? "Registration failed");
     }
+  } catch (e) {
+    showSnack("Error: $e");
   }
+}
+
 
   Widget getRoleForm() {
     if (selectedRole == Role.Student) {

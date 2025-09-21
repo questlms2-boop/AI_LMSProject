@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 class UserCard extends StatelessWidget {
   final String userName;
   final String userRole;
+  final VoidCallback? onBlock;
+  final VoidCallback? onDelete;
 
   const UserCard({
     super.key,
     required this.userName,
     required this.userRole,
+    this.onBlock,
+    this.onDelete,
   });
 
   @override
@@ -29,14 +33,25 @@ class UserCard extends StatelessWidget {
           userRole,
           style: const TextStyle(color: Colors.deepPurple),
         ),
-        trailing: ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-          onPressed: () {},
-          child: Text("Block"),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onBlock != null)
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                onPressed: onBlock,
+                child: const Text("Block"),
+              ),
+            const SizedBox(width: 8),
+            if (onDelete != null)
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: onDelete,
+                child: const Text("Delete"),
+              ),
+          ],
         ),
       ),
     );
   }
 }
-
-

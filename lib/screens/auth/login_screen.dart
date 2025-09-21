@@ -27,7 +27,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void showSnackbar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
-
   void handleLogin() async {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       showSnackbar("Please fill in all required fields");
@@ -44,8 +43,30 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Default admin credentials
+    const defaultAdminEmail = "admin@example.com";
+    const defaultAdminPassword = "admin123";
+
+    // Check admin default credentials
+    if (selectedRole == Role.Admin) {
+      if (emailController.text.trim() == defaultAdminEmail &&
+          passwordController.text.trim() == defaultAdminPassword) {
+        showSnackbar("Login successful as Admin");
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminDashboard()),
+        );
+        return; // Skip API call
+      } else {
+        showSnackbar("Invalid admin credentials");
+        return;
+      }
+    }
+
+    // Proceed with API login for Learner and Instructor
     try {
-      final url = Uri.parse('http://localhost:8081/api/verifyToken'); // ✅ Replace with actual IP
+      final url = Uri.parse('http://10.0.2.2:8081/api/login');
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},
@@ -65,10 +86,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
           switch (selectedRole) {
             case Role.Learner:
+             final userId = result['userId'] as String? ?? '';
+              if (userId.isEmpty) {
+                showSnackbar("Login failed: Missing user ID");
+                return;
+              }
+
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const LearnerDashboard()),
+                MaterialPageRoute(builder: (context) => LearnerDashboard(userId: userId)),
               );
+
               break;
             case Role.Instructor:
               Navigator.pushReplacement(
@@ -76,11 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 MaterialPageRoute(builder: (context) => const InstructorDashboard()),
               );
               break;
-            case Role.Admin:
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => AdminDashboard()),
-              );
+            default:
+              // Already handled Admin above
               break;
           }
         } else {
@@ -93,6 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
       showSnackbar("Error during login: $e");
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

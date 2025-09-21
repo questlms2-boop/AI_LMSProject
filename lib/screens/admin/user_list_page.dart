@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class UserListPage extends StatefulWidget {
-  final List<Map<String, String>> users;
+  final List<Map<String, dynamic>> users;
 
   const UserListPage({super.key, required this.users});
 
@@ -13,7 +13,7 @@ class _UserListPageState extends State<UserListPage> {
   String searchQuery = '';
   String selectedRole = 'All';
 
-  late List<Map<String, String>> filteredUsers;
+  late List<Map<String, dynamic>> filteredUsers;
 
   @override
   void initState() {
@@ -90,8 +90,8 @@ class _UserListPageState extends State<UserListPage> {
                       items: const [
                         DropdownMenuItem(value: 'All', child: Text("All")),
                         DropdownMenuItem(
-                          value: 'Learner',
-                          child: Text("Learner"),
+                          value: 'Student',
+                          child: Text("Student"),
                         ),
                         DropdownMenuItem(
                           value: 'Instructor',
@@ -135,13 +135,7 @@ class _UserListPageState extends State<UserListPage> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.orange,
-                                ),
-                                onPressed: () => editUser(index),
-                              ),
+                              
                               IconButton(
                                 icon: const Icon(
                                   Icons.delete,
