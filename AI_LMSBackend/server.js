@@ -8,7 +8,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://questlms2_db_user:Muthu@97@cluster0.pk5yy9w.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb+srv://questlms2_db_user:Muthu%4097@cluster0.pk5yy9w.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true });
 // Muthu@97
 // User Schema
 const userSchema = new mongoose.Schema({
