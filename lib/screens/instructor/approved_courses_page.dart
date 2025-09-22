@@ -12,7 +12,7 @@ class ApprovedCoursesPage extends StatefulWidget {
 class _ApprovedCoursesPageState extends State<ApprovedCoursesPage> {
   List<Map<String, dynamic>> approvedCourses = [];
   bool isLoading = true;
-  final String apiBaseUrl = 'http://10.0.2.2:8081/api';
+  final String apiBaseUrl = 'http://127.0.0.1:8081/api';
 
   @override
   void initState() {

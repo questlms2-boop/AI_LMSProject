@@ -22,7 +22,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
  List<Map<String, dynamic>> courses = [];
   bool loadingUsers = false;
 bool loadingCourses = false;
-  final String apiBaseUrl = 'http://10.0.2.2:8081/api'; // Adjust as needed
+  final String apiBaseUrl = 'http://127.0.0.1:8081/api'; // Adjust as needed
 
   @override
   void initState() {
@@ -71,7 +71,7 @@ bool loadingCourses = false;
 }
 
 Future<void> approveCourse(String courseId) async {
-  final url = Uri.parse('http://10.0.2.2:8081/api/course-content/$courseId/approve');
+  final url = Uri.parse('http://127.0.0.1:8081/api/course-content/$courseId/approve');
   final response = await http.patch(url);
 
   if (response.statusCode == 200) {

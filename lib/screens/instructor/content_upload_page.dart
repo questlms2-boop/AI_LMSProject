@@ -15,7 +15,7 @@ class _ContentUploadPageState extends State<ContentUploadPage> {
   List<dynamic> contentList = [];
   bool loading = false;
 
-  final String apiUrl = 'http://10.0.2.2:8081/api/course-content';
+  final String apiUrl = 'http://127.0.0.1:8081/api/course-content';
 
   @override
   void initState() {

@@ -55,7 +55,7 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<List<QuizItem>> fetchQuizzes() async {
-    final resp = await http.get(Uri.parse('http://10.0.2.2:8081/api/quizzes/${widget.course.id}'));
+    final resp = await http.get(Uri.parse('http://127.0.0.1:8081/api/quizzes/${widget.course.id}'));
     final body = jsonDecode(resp.body);
     List data = body['data'];
     return data.map((json) => QuizItem.fromJson(json)).toList();
@@ -67,7 +67,7 @@ class _QuizPageState extends State<QuizPage> {
         .toList();
 
     final resp = await http.post(
-      Uri.parse('http://10.0.2.2:8081/api/user-quizzes/submit'),
+      Uri.parse('http://127.0.0.1:8081/api/user-quizzes/submit'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'userId': widget.userId,

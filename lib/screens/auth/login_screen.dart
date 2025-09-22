@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Proceed with API login for Learner and Instructor
     try {
-      final url = Uri.parse('http://10.0.2.2:8081/api/login');
+      final url = Uri.parse('http://127.0.0.1:8081/api/login');
       final response = await http.post(
         url,
         headers: {"Content-Type": "application/json"},

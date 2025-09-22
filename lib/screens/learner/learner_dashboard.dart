@@ -55,14 +55,14 @@ class _LearnerDashboardState extends State<LearnerDashboard> {
   }
 
   Future<List<Course>> fetchCourses() async {
-    final resp = await http.get(Uri.parse('http://10.0.2.2:8081/api/course-content'));
+    final resp = await http.get(Uri.parse('http://127.0.0.1:8081/api/course-content'));
     final body = jsonDecode(resp.body);
     List data = body['data'];
     return data.map((c) => Course.fromJson(c)).toList();
   }
 
   Future<List<UserCourseProgress>> fetchUserProgress(String userId) async {
-    final resp = await http.get(Uri.parse('http://10.0.2.2:8081/api/user-progress/$userId'));
+    final resp = await http.get(Uri.parse('http://127.0.0.1:8081/api/user-progress/$userId'));
     final body = jsonDecode(resp.body);
     print("user-progress response: ${resp.body}");
     List data = body['data'];
@@ -84,7 +84,7 @@ class _LearnerDashboardState extends State<LearnerDashboard> {
   }
 
   Future<List<LeaderboardEntry>> fetchLeaderboard() async {
-    final resp = await http.get(Uri.parse('http://10.0.2.2:8081/api/leaderboard'));
+    final resp = await http.get(Uri.parse('http://127.0.0.1:8081/api/leaderboard'));
     final body = jsonDecode(resp.body);
     List data = body['data'];
     return data.map((json) => LeaderboardEntry.fromJson(json)).toList();

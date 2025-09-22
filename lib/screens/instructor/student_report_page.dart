@@ -20,7 +20,7 @@ class _StudentReportPageState extends State<StudentReportPage> {
   }
 
   Future<List<Map<String, dynamic>>> fetchStudents() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8081/api/students'));
+    final response = await http.get(Uri.parse('http://127.0.0.1:8081/api/students'));
     
     if (response.statusCode == 200) {
       final body = json.decode(response.body);

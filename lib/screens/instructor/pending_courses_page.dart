@@ -12,7 +12,7 @@ class PendingCoursesPage extends StatefulWidget {
 class _PendingCoursesPageState extends State<PendingCoursesPage> {
   List<Map<String, dynamic>> pendingCourses = [];
   bool isLoading = true;
-  final String apiBaseUrl = 'http://10.0.2.2:8081/api';
+  final String apiBaseUrl = 'http://127.0.0.1:8081/api';
 
   @override
   void initState() {
